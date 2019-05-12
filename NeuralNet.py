@@ -17,6 +17,8 @@ my_bias = 0.1
 
 # First four weights = Input, next four weights = hidden
 input_values = [[0.1, 0.1], [0.1, 0.2]]
+target_values = [[1, 0], [0, 1]]
+
 input_weights = [0.1, 0.1, 0.2, 0.1]
 hidden_weights = [0.1, 0.1, 0.1, 0.2]
 
@@ -84,14 +86,23 @@ def out(input_lst, weight_lst, bias):
     return 1 / (1 + math.exp(-1 * net(input_lst, weight_lst, bias)))
 
 
-def out_calc_e_total():
-    return
-    # for output -> hidden
-    # Etotal = -(Target[out_node] - Out[out_node) * Out[out_node] * (1 - Out[out_node]) * Out[hidden_node] (For hidden layers)
+def out_calc_e_total(target, fp_lst):
+    """
+    Calculates the e_total for weights connected to the output.
+    This is done using the following formula:
+    ETotal = -(TargetOut - OutputOut) * OutputOut * (1 - OutputOut) * OutputOut
+    """
+    e_total_list = []
 
+    for in_node in range(n_hidden):  # For each hidden layer node
+        for out_node in range(n_output):  # Find ETotal for weight connected to each output node
 
+            e_total = -1 * (target[out_node] - fp_lst[1][out_node]) * fp_lst[1][out_node] * (
+                        1 - fp_lst[1][out_node]) * fp_lst[0][in_node]
 
-    return
+            e_total_list.append(e_total)
+
+    return e_total_list
 
 def hidden_calc_e_total():
     return
@@ -107,9 +118,14 @@ def calc_new_weight():
     return
 
 
-print(forward_pass(0))
 
-#
+batch_no = 0
+
+forward_pass_list = forward_pass(batch_no)
+e_totals_hidden = out_calc_e_total(target_values[batch_no], forward_pass_list)
+print(e_totals_hidden)
+
+
 # for _ in range(epoch):
 #     for _ in range(sample_size / batch_size):
 #
