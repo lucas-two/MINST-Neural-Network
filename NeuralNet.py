@@ -111,59 +111,62 @@ def hidden_calc_e_total(target, fp_lst, input_vals):
     Calculates the e_total for weights connected from input to hidden layer.
     This is done using the following formula:
 
-    SumEOuts = SUM OF ALL OUTPUT NODES -> -(TargetOut - OutputOut) * OutputOut * (1 - OutputOut) * Weight
+    SumEOuts = SUM OF ALL OUTPUT NODES -> -(TargetOut - OutputOut) * OutputOut * (1 - OutputOut) * Weight(Hidden ->Output)
     ETotal = SumEOuts * HiddenOut * (1 - HiddenOut) * InputValue
     """
+    e_total_lst = []
+    e_sum_lst = []
 
-    # NOTE:
-    # Brain has lost ability to think.
-    # Will come back to solving this tomorrow.
+    # Calculate ESum values
+    weight_no = 0  # Keeping track of weight we are on
+    for hidden_node in range(n_hidden):  # For each hidden layer node...
+        e_sum = 0
+        for output_node in range(n_output):  # For each output layer node...
+            e_sum += -1 * (target[output_node] - fp_lst[1][output_node]) * fp_lst[1][output_node] * (
+                    1 - fp_lst[1][output_node]) * hidden_weights[weight_no]
+            weight_no += 1
 
-    # e_total_list = []
-    # e_sum_values = []
+        e_sum_lst.append(e_sum)
 
-    # for in_node in range(n_input):
-    #     e_out_sum = 0
-    #     for out_node in range(n_output):
-    #         e_out_sum += -1 * (target[out_node] - fp_lst[1][out_node]) * fp_lst[1][out_node] * (
-    #                 1 - fp_lst[1][out_node]) * input_weights[in_node + out_node]
-    #
-    #     for hidden_node in range(n_hidden):
-    #
-    # for weight in range(len(input_weights)):
-    #     for in_node in range(n_input):
-    #         e_out_sum = 0
-    #         for out_node in range(n_output):
-    #             e_out_sum += -1 * (target[out_node] - fp_lst[1][out_node]) * fp_lst[1][out_node] * (
-    #                     1 - fp_lst[1][out_node]) * input_weights[num]
-    #             print("Weight Used:", input_weights[num])
+    # Calculate ETotal for each weight
+    for input_node in range(n_input):
+        for hidden_node in range(n_hidden):
+            e_total = e_sum_lst[hidden_node] * fp_lst[1][hidden_node] * (
+                    1 - fp_lst[1][hidden_node]) * input_vals[input_node]
 
+            e_total_lst.append(e_total)
 
-    #
-    #
-    # for num in range(input_weights):  # For all weights
-    #
-    #     e_out_sum = 0
-    #
-    #     for out_node in range(n_output):  # For all output nodes
-    #         # Find the sum of outs
-    #         e_out_sum += -1 * (target[out_node] - fp_lst[1][out_node]) * fp_lst[1][out_node] * (
-    #                 1 - fp_lst[1][out_node]) * input_weights[num]
-    #         print("Weight Used:", input_weights[num])
-    #
-    #     for in_node in range(n_input):
-    #         e_total = e_out_sum * fp_lst[0][in_node] * (1 - fp_lst[0][in_node]) * input_vals[in_node]
-    #         e_total_list.append(e_total)
-    #
-    # return e_total_list
+    return e_total_lst
 
 
-def calc_e_final():
-    return
+def calc_e_final(all_et_lst, size_of_batch):
+    """
+    Calculate the EFinal of a given set of ETotal sets
+    """
+    e_final_lst = []
+
+    for i in range(all_et_lst[0]):  # For each index of the Etotal list
+        et_sum = 0  # Sum of ETotal values with same index
+        for lst in all_et_lst:  # For each Etotal list
+            et_sum += lst[i]
+
+        e_final = (1/size_of_batch) * et_sum
+        e_final_lst.append(e_final)
+
+    return e_final_lst
 
 
-def calc_new_weight():
-    return
+def calc_new_weight(weights, e_totals, lr):
+    """
+    Calculate value of new weights
+    """
+    new_weight_lst = []
+
+    for w in range(len(weights)):
+        new_weight = weights[w] - (lr * e_totals[w])
+        new_weight_lst.append(new_weight)
+
+    return new_weight_lst
 
 
 
@@ -172,29 +175,31 @@ batch_no = 0
 forward_pass_list = forward_pass(batch_no)
 e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
 e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
-print(e_total_hidden)
+combined_e_total = e_total_hidden + e_totals_output
+combined_weights = input_weights + hidden_weights
+my_new_weights = calc_new_weight(combined_weights, combined_e_total, learning_rate)
 
-# For all output nodes...
-# sum E_Outs += -(Target[out_node] - Out[out_node) * Out[out_node] * (1 - Out[out_node]) * weight
-# Etotal = sum E_Outs * Out[hidden] * (1 - Out[hidden]) * Out[input value]
-
-
+print(my_new_weights)
 
 
+for ep in range(epoch):
+    for bi in range(round(sample_size / batch_size)):
 
-    # e_out_sum += -1 * (target_values[batch_no] - )
-    # e_out_sum += -1 * Target[]
+        # Forward Pass
+        forward_pass_list = forward_pass(batch_no)
 
-# for _ in range(epoch):
-#     for _ in range(sample_size / batch_size):
-#
-#         # Forward pass ->
-#
-#         for _ in range(batch_size):
-#             # Calculate Etotal for Weight
-#
-#         # Calculate Efinal for Weight
-#
-#         # Calculate new weight total
-#
-#     # Predictions & Make update plot
+        # Calculate ETotal for each batch input
+        collected_e_total = []
+        for batch_no in range(batch_size):
+            e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
+            e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
+            combined_e_total = e_total_hidden + e_totals_output
+            collected_e_total.append(combined_e_total)
+
+        # Calculate EFinal
+        e_final_list = calc_e_final(collected_e_total, batch_size)
+
+        # Calculate new weight total
+
+
+    # Predictions & Make update plot
