@@ -5,24 +5,6 @@
 import random
 import math
 
-n_input = 2
-n_hidden = 2
-n_output = 2
-
-epoch = 1
-sample_size = 2
-batch_size = 2
-learning_rate = 0.1
-my_bias = 0.1
-
-# First four weights = Input, next four weights = hidden
-input_values = [[0.1, 0.1], [0.1, 0.2]]
-target_values = [[1, 0], [0, 1]]
-
-input_weights = [0.1, 0.1, 0.2, 0.1]
-hidden_weights = [0.1, 0.1, 0.1, 0.2]
-
-
 # def init_weights(weight_list):
 #     weight_list = 0.01 * random.random()
 #     print(weight_list)
@@ -145,7 +127,7 @@ def calc_e_final(all_et_lst, size_of_batch):
     """
     e_final_lst = []
 
-    for i in range(all_et_lst[0]):  # For each index of the Etotal list
+    for i in range(len(all_et_lst[0])):  # For each index of the Etotal list
         et_sum = 0  # Sum of ETotal values with same index
         for lst in all_et_lst:  # For each Etotal list
             et_sum += lst[i]
@@ -169,28 +151,35 @@ def calc_new_weight(weights, e_totals, lr):
     return new_weight_lst
 
 
+# INPUT
+n_input = 2
+n_hidden = 2
+n_output = 2
 
-batch_no = 0
+epoch = 1
+sample_size = 2
+batch_size = 2
+learning_rate = 0.1
+my_bias = 0.1
 
-forward_pass_list = forward_pass(batch_no)
-e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
-e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
-combined_e_total = e_total_hidden + e_totals_output
-combined_weights = input_weights + hidden_weights
-my_new_weights = calc_new_weight(combined_weights, combined_e_total, learning_rate)
+# First four weights = Input, next four weights = hidden
+input_values = [[0.1, 0.1], [0.1, 0.2]]
+target_values = [[1, 0], [0, 1]]
 
-print(my_new_weights)
+input_weights = [0.1, 0.1, 0.2, 0.1]
+hidden_weights = [0.1, 0.1, 0.1, 0.2]
 
 
 for ep in range(epoch):
     for bi in range(round(sample_size / batch_size)):
 
-        # Forward Pass
-        forward_pass_list = forward_pass(batch_no)
-
-        # Calculate ETotal for each batch input
         collected_e_total = []
         for batch_no in range(batch_size):
+
+            # Forward pass
+            forward_pass_list = forward_pass(batch_no)
+
+            # Calculate ETotal
             e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
             e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
             combined_e_total = e_total_hidden + e_totals_output
@@ -200,6 +189,9 @@ for ep in range(epoch):
         e_final_list = calc_e_final(collected_e_total, batch_size)
 
         # Calculate new weight total
-
+        combined_weights = input_weights + hidden_weights
+        my_new_weights = calc_new_weight(combined_weights, e_final_list, learning_rate)
+        for i in my_new_weights:
+            print(i)
 
     # Predictions & Make update plot
