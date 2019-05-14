@@ -4,21 +4,30 @@
 
 import random
 import math
-
-# def init_weights(weight_list):
-#     weight_list = 0.01 * random.random()
-#     print(weight_list)
-#
-# init_weights(3)
+import numpy as np
 
 
-def forward_pass(batch_no):
+def init_weights(no_input, no_hidden, no_output):
+    """
+    Create a set of random weights
+    """
+    weight_lst = []
+    no_of_weights = (no_input * no_hidden) + (no_hidden * no_output)
+
+    for weight in range(no_of_weights):
+        weight = 0.01 * random.random()
+        weight_lst.append(weight)
+
+    return weight_lst
+
+
+def forward_pass(batch_num, input_vals, input_bias):
     """
     Performing a forward pass
     """
-
     forward_pass_result = []
-    # FORWARD PASS (Hidden) -> (Output)
+
+    # FORWARD PASS (Input) -> (Hidden)
     hidden_out = []
     lower = 0
     upper = n_input
@@ -26,7 +35,7 @@ def forward_pass(batch_no):
     for node in range(n_hidden):  # For each hidden layer node
 
         # Find its output value from the given inputs values and weights for said output node
-        hidden_out.append(out(input_values[batch_no], input_weights[lower:upper], my_bias))
+        hidden_out.append(out(input_vals[batch_num], input_weights[lower:upper], input_bias))
         lower += n_input
         upper += n_input
 
@@ -38,7 +47,7 @@ def forward_pass(batch_no):
     upper = n_hidden
 
     for node in range(n_output):
-        output_out.append(out(hidden_out, hidden_weights[lower:upper], my_bias))
+        output_out.append(out(hidden_out, hidden_weights[lower:upper], input_bias))
         lower += n_input
         upper += n_input
 
@@ -151,47 +160,99 @@ def calc_new_weight(weights, e_totals, lr):
     return new_weight_lst
 
 
-# INPUT
-n_input = 2
-n_hidden = 2
-n_output = 2
+def quadratic_cost(output_out, target_out):
+    """
+    Use the quadratic cost function to calculate test accuracy.
 
-epoch = 1
-sample_size = 2
-batch_size = 2
-learning_rate = 0.1
-my_bias = 0.1
+    C(W,B) = FOR EACH OUTPUT NODE -> 1/2(TargetOut - OutputOut)^2
+    """
+    total = 0
+    for node in range(len(output_out)):
+        total += 0.5 * (target_out[node] - output_out[node]) ** 2
+
+    return total
+
+
+def cross_entropy_cost(output_out, target_out):
+    """
+    Use the cross entropy_cost function to calculate test accuracy
+
+    C (W, B) = 1/n -> FOR EACH OUTPUT NODE (Y1 - Y1 ln(OutputOut) - (1 - Y1) ln(1 - OutputOut)
+    """
+    total = 0
+    for node in range(len(output_out)):
+        total += target_out[node] - target_out[node] * np.log(output_out[node]) - (1 - target_out[node]) * np.log(1 - output_out[node])
+
+    total = 1 / total
+
+    return total
+
+
+
+
+# INPUT
+n_input = 10
+n_hidden = 3
+n_output = 4
+
+trainset  # Get file
+
+trainset_labels  # Get file
+# We should convert this to an array format
+
+testset  # Get file
+testset_predictions = 0  # Save file
 
 # First four weights = Input, next four weights = hidden
-input_values = [[0.1, 0.1], [0.1, 0.2]]
-target_values = [[1, 0], [0, 1]]
+# input_values = [[0.1, 0.1], [0.1, 0.2]]
+# target_values = [[1, 0], [0, 1]]
+# input_weights = [0.1, 0.1, 0.2, 0.1]
+# hidden_weights = [0.1, 0.1, 0.1, 0.2]
 
-input_weights = [0.1, 0.1, 0.2, 0.1]
-hidden_weights = [0.1, 0.1, 0.1, 0.2]
+# Hyper Parameters
+epoch = 30
+sample_size = 2
+batch_size = 2  # Mini batch
+learning_rate = 3
+my_bias = 0.1
+
+# Initialise the weights as random small float values, then split them into groups
+initial_weights = init_weights(n_input, n_hidden, n_output)
+input_weights = initial_weights[0:n_input * n_hidden]
+hidden_weights = initial_weights[n_input * n_hidden: n_input * n_hidden + n_hidden * n_output]
 
 
-for ep in range(epoch):
-    for bi in range(round(sample_size / batch_size)):
-
-        collected_e_total = []
-        for batch_no in range(batch_size):
-
-            # Forward pass
-            forward_pass_list = forward_pass(batch_no)
-
-            # Calculate ETotal
-            e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
-            e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
-            combined_e_total = e_total_hidden + e_totals_output
-            collected_e_total.append(combined_e_total)
-
-        # Calculate EFinal
-        e_final_list = calc_e_final(collected_e_total, batch_size)
-
-        # Calculate new weight total
-        combined_weights = input_weights + hidden_weights
-        my_new_weights = calc_new_weight(combined_weights, e_final_list, learning_rate)
-        for i in my_new_weights:
-            print(i)
+# for ep in range(epoch):
+#     for bi in range(round(sample_size / batch_size)):
+#
+#         collected_e_total = []
+#         for batch_no in range(batch_size):
+#
+#             # Forward pass
+#             forward_pass_list = forward_pass(batch_no, input_values, my_bias)
+#
+#             # Calculate ETotal
+#             e_totals_output = out_calc_e_total(target_values[batch_no], forward_pass_list)
+#             e_total_hidden = hidden_calc_e_total(target_values[batch_no], forward_pass_list, input_values[batch_no])
+#             combined_e_total = e_total_hidden + e_totals_output
+#             collected_e_total.append(combined_e_total)
+#
+#         # Calculate EFinal
+#         e_final_list = calc_e_final(collected_e_total, batch_size)
+#
+#         # Calculate new weight total
+#         combined_weights = input_weights + hidden_weights
+#         my_new_weights = calc_new_weight(combined_weights, e_final_list, learning_rate)
+#
+#         print(my_new_weights)
+#         # Split weights up again
+#         input_weights = my_new_weights[0:len(input_weights)]
+#         hidden_weights = my_new_weights[len(input_weights): len(input_weights) + len(hidden_weights)]
 
     # Predictions & Make update plot
+    # fp = forward_pass(0, test_set, my_bias)  # Forward pass
+    # f_out = fp[0]  # Grab the output results of the forward pass
+    # accuracy = quadratic_cost(fp[0],  target_test_set)
+    # accuracy_2 = cross_entropy_cost(fp[0],  target_test_set)
+    # print(accuracy, accuracy_2)
+
