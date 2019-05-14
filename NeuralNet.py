@@ -170,8 +170,9 @@ def quadratic_cost(output_out, target_out):
     total = 0
     for target_node in range(len(target_out)):  # For each target data set
         for output_node in range(len(output_out)):  # For each output node
-            total += 0.5 * (target_out[target_node][output_node] - output_out[output_node]) ** 2
+            total += (0.5 * (target_out[target_node][output_node] - output_out[output_node])) ** 2
 
+    total = 1 / total
     return total
 
 
@@ -182,11 +183,12 @@ def cross_entropy_cost(output_out, target_out):
     C (W, B) = 1/n -> FOR EACH OUTPUT NODE (Y1 - Y1 ln(OutputOut) - (1 - Y1) ln(1 - OutputOut)
     """
     total = 0
-    for node in range(len(output_out)):
-        total += target_out[node] - target_out[node] * np.log(output_out[node]) - (1 - target_out[node]) * np.log(1 - output_out[node])
+    for target_node in range(len(target_out)):  # For each target data set
+        for output_node in range(len(output_out)):  # For each output node
+            total += target_out[target_node][output_node] - target_out[target_node][output_node] * np.log(output_out[output_node]) - \
+                     (1 - target_out[target_node][output_node]) * np.log(1 - output_out[output_node])
 
     total = 1 / total
-
     return total
 
 
@@ -211,6 +213,8 @@ training_set_f = "TrainDigitX.csv.gz"
 training_target_f = "TrainDigitY.csv.gz"
 test_set_f = "TestDigitX.csv.gz"
 test_target_set_f = "TestDigitY.csv.gz"
+
+print("Loading Data...", end=" ")
 
 # Hyper Parameters
 epoch = 5
@@ -266,6 +270,10 @@ hidden_weights = initial_weights[n_input * n_hidden: n_input * n_hidden + n_hidd
 # Track the accuracy and epoch for the plotting
 y_accuracy_lst = []
 x_epoch_lst = []
+
+print("Complete")
+print("Training Data & Testing Data...")
+
 for ep in range(epoch):
     for bi in range(round(sample_size / batch_size)):
 
@@ -298,8 +306,8 @@ for ep in range(epoch):
     # Predictions & Make update plot
     fp = forward_pass(0, test_input_values, my_bias)  # Forward pass
     f_out = fp[0]  # Grab the output results of the forward pass
-    accuracy = quadratic_cost(fp[1],  test_target_values)
-    x_epoch_lst.append(ep)
+    accuracy = cross_entropy_cost(fp[1],  test_target_values)
+    x_epoch_lst.append(ep + 1)
     y_accuracy_lst.append(accuracy)
     draw_line(x_epoch_lst, y_accuracy_lst)
 
