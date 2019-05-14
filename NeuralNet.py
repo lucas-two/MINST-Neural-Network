@@ -5,6 +5,7 @@
 import random
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def init_weights(no_input, no_hidden, no_output):
@@ -164,11 +165,12 @@ def quadratic_cost(output_out, target_out):
     """
     Use the quadratic cost function to calculate test accuracy.
 
-    C(W,B) = FOR EACH OUTPUT NODE -> 1/2(TargetOut - OutputOut)^2
+    C(W,B) = FOR EACH TARGET NODE -> 1/2(TargetOut - OutputOut)^2
     """
     total = 0
-    for node in range(len(output_out)):
-        total += 0.5 * (target_out[node] - output_out[node]) ** 2
+    for target_node in range(len(target_out)):  # For each target data set
+        for output_node in range(len(output_out)):  # For each output node
+            total += 0.5 * (target_out[target_node][output_node] - output_out[output_node]) ** 2
 
     return total
 
@@ -188,7 +190,18 @@ def cross_entropy_cost(output_out, target_out):
     return total
 
 
+def draw_line(x_epoch, y_accuracy):
+    """
+    Plots the accuracy against each epoch
+    """
+    plt.plot(x_epoch, y_accuracy, linewidth = 3)
 
+    plt.title("Accuracy vs Epoch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.tick_params(axis='both', labelsize=9)
+
+    plt.show()
 
 # INPUT
 n_input = 784
@@ -196,11 +209,13 @@ n_hidden = 30
 n_output = 10
 training_set_f = "TrainDigitX.csv.gz"
 training_target_f = "TrainDigitY.csv.gz"
+test_set_f = "TestDigitX.csv.gz"
+test_target_set_f = "TestDigitY.csv.gz"
 
 # Hyper Parameters
-epoch = 30
-sample_size = 50000
-batch_size = 20  # Mini batch
+epoch = 5
+sample_size = 50
+batch_size = 5  # Mini batch
 learning_rate = 3
 my_bias = 0.01
 
@@ -225,8 +240,17 @@ target_values, input_values = zip(*shuffled_set)
 target_values = list(target_values)
 input_values = list(input_values)
 
-# testset  # Get file
-# testset_predictions = 0  # Save file
+# Testing Input
+test_input_values = np.loadtxt(test_set_f, dtype=float, delimiter=',')
+
+# Testing Output
+raw_test_target_values = np.loadtxt(test_target_set_f, dtype=int, delimiter=',')
+
+test_target_values = []
+for i in raw_test_target_values:
+    data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    data[i] = 1
+    test_target_values.append(data)
 
 # First four weights = Input, next four weights = hidden
 # input_values = [[0.1, 0.1], [0.1, 0.2]]
@@ -239,6 +263,9 @@ initial_weights = init_weights(n_input, n_hidden, n_output)
 input_weights = initial_weights[0:n_input * n_hidden]
 hidden_weights = initial_weights[n_input * n_hidden: n_input * n_hidden + n_hidden * n_output]
 
+# Track the accuracy and epoch for the plotting
+y_accuracy_lst = []
+x_epoch_lst = []
 for ep in range(epoch):
     for bi in range(round(sample_size / batch_size)):
 
@@ -269,9 +296,12 @@ for ep in range(epoch):
     print("Successfully completed epoch %s of %s" % (ep + 1, epoch))
 
     # Predictions & Make update plot
-    # fp = forward_pass(0, test_set, my_bias)  # Forward pass
-    # f_out = fp[0]  # Grab the output results of the forward pass
-    # accuracy = quadratic_cost(fp[0],  target_test_set)
-    # accuracy_2 = cross_entropy_cost(fp[0],  target_test_set)
-    # print(accuracy, accuracy_2)
+    fp = forward_pass(0, test_input_values, my_bias)  # Forward pass
+    f_out = fp[0]  # Grab the output results of the forward pass
+    accuracy = quadratic_cost(fp[1],  test_target_values)
+    x_epoch_lst.append(ep)
+    y_accuracy_lst.append(accuracy)
+    draw_line(x_epoch_lst, y_accuracy_lst)
+
+
 
